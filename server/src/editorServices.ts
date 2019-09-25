@@ -2033,7 +2033,7 @@ export class CompilerService {
       let result = ng as any;
       if (modules && modules[0]) {
         const resolvedModule = modules[0];
-        const moduleName = path.dirname(resolvedModule.resolvedFileName);
+        const moduleName = undefined;
         if (fs.existsSync(moduleName)) {
             try {
                 result = require(moduleName) || result;
