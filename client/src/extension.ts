@@ -51,6 +51,7 @@ export function activate(context: ExtensionContext) {
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
+    diagnosticCollectionName: 'ng-language-service',
     // Register the server for Angular templates and TypeScript documents
     documentSelector: [
       // scheme: 'file' means listen to changes to files on disk only

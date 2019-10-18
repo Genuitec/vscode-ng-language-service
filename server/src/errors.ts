@@ -11,6 +11,7 @@ export class ErrorCollector {
     private connection: IConnection,
     private initialDelay: number = 750,
     private nextDelay: number = 20) {}
+    private documentProcessingQueue: TextDocumentIdentifier[] = [];
 
   public requestErrors(...documents: TextDocumentIdentifier[]) {
     if (this.timer) {
@@ -20,10 +21,12 @@ export class ErrorCollector {
     let index = 0;
     let process: () => void;
 
+    this.documentProcessingQueue.push(...documents);
     process = () => {
       this.timer = undefined;
-      this.sendErrorsFor(documents[index++]);
-      if (index < documents.length) this.timer = setTimeout(process, this.nextDelay);
+      const [documentToProcess] = this.documentProcessingQueue.splice(0, 1)
+      this.sendErrorsFor(documentToProcess);
+      if (index < this.documentProcessingQueue.length) this.timer = setTimeout(process, this.nextDelay);
     }
     this.timer = setTimeout(process, this.initialDelay);
   }
