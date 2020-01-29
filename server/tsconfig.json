@@ -2,10 +2,12 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "strict": false,
     "outDir": "out",
     "rootDir": "src"
   },
   "include": ["src/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "src/banner.ts",
+    "node_modules"
+  ]
 }

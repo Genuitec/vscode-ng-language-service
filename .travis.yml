@@ -13,8 +13,10 @@ install:
   - ./scripts/install.sh
 
 script:
+  - ./scripts/lint.sh
   - ./scripts/build.sh
   - ./scripts/test.sh
+  - ./scripts/format.sh
 
 after_script:
   - ./scripts/cleanup.sh

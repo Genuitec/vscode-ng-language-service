@@ -8,8 +8,9 @@ class ResponseEmitter extends EventEmitter {}
 
 describe('Angular Language Service', () => {
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; /* 10 seconds */
-  const PROJECT_PATH = resolve(__dirname, '../project');
-  const SERVER_PATH = resolve(__dirname, '../../server/out/server.js');
+  const PACKAGE_ROOT = resolve(__dirname, '../../..');
+  const PROJECT_PATH = resolve(__dirname, '../../project');
+  const SERVER_PATH = resolve(__dirname, '../../../dist/server/index.js');
   const responseEmitter = new ResponseEmitter();
   let server: ChildProcess;
 
@@ -31,7 +32,21 @@ describe('Angular Language Service', () => {
   }
 
   beforeEach(() => {
-    server = fork(SERVER_PATH, ['--node-ipc']);
+    server = fork(
+        SERVER_PATH,
+        [
+          '--node-ipc',
+          '--tsProbeLocations',
+          PACKAGE_ROOT,
+          '--ngProbeLocations',
+          SERVER_PATH,
+        ],
+        {
+          cwd: PROJECT_PATH,
+          env: {
+            TSC_NONPOLLING_WATCHER: 'true',
+          },
+        });
     server.on('error', fail);
     server.on('close', (code, signal) => {
       console.log(`Server 'close' event received`, code, signal);
@@ -39,7 +54,9 @@ describe('Angular Language Service', () => {
     });
     server.on('message', (data: Message) => {
       if (isNotificationMessage(data)) {
-        console.log('[server]', data.params.message);
+        const toLog = ['[server]', data.method];
+        if (data.params && data.params.message) toLog.push(data.params.message);
+        console.log(...toLog);
       } else {
         responseEmitter.emit('response', data);
       }
@@ -72,7 +89,7 @@ describe('Angular Language Service', () => {
          * process. If the parent process is not alive then the server should
          * exit (see exit notification) its process.
          */
-        'processId': server.pid,
+        'processId': process.pid,
         'rootUri': `file://${PROJECT_PATH}`,
         'capabilities': {},
         /**
@@ -88,10 +105,8 @@ describe('Angular Language Service', () => {
       'result': {
         'capabilities': {
           'textDocumentSync': 2,
-          'completionProvider': {
-            'resolveProvider': false,
-            'triggerCharacters': ['<', '.', '*', '[', '(']
-          },
+          'completionProvider':
+              {'resolveProvider': false, 'triggerCharacters': ['<', '.', '*', '[', '(']},
           'definitionProvider': true,
           'hoverProvider': true
         }
@@ -106,7 +121,7 @@ describe('Angular Language Service', () => {
       'id': 0,
       'method': 'initialize',
       'params': {
-        'processId': server.pid,
+        'processId': process.pid,
         'rootUri': `file://${PROJECT_PATH}`,
         'capabilities': {},
         'trace': 'off'
@@ -118,10 +133,8 @@ describe('Angular Language Service', () => {
       'result': {
         'capabilities': {
           'textDocumentSync': 2,
-          'completionProvider': {
-            'resolveProvider': false,
-            'triggerCharacters': ['<', '.', '*', '[', '(']
-          },
+          'completionProvider':
+              {'resolveProvider': false, 'triggerCharacters': ['<', '.', '*', '[', '(']},
           'definitionProvider': true,
           'hoverProvider': true
         }
@@ -145,15 +158,9 @@ describe('Angular Language Service', () => {
       'jsonrpc': '2.0',
       'method': 'textDocument/didChange',
       'params': {
-        'textDocument': {
-          'uri': `file://${PROJECT_PATH}/app/app.component.ts`,
-          'version': 2
-        },
+        'textDocument': {'uri': `file://${PROJECT_PATH}/app/app.component.ts`, 'version': 2},
         'contentChanges': [{
-          'range': {
-            'start': {'line': 4, 'character': 29},
-            'end': {'line': 4, 'character': 29}
-          },
+          'range': {'start': {'line': 4, 'character': 29}, 'end': {'line': 4, 'character': 29}},
           'rangeLength': 0,
           'text': '.'
         }]
@@ -169,6 +176,7 @@ describe('Angular Language Service', () => {
         'position': {'line': 4, 'character': 30}
       }
     });
+    // TODO: Match the response with a golden file instead of hardcoding result.
     expect(response).toEqual({
       'jsonrpc': '2.0',
       'id': 1,
@@ -178,282 +186,451 @@ describe('Angular Language Service', () => {
           'kind': 2,
           'detail': 'method',
           'sortText': 'toString',
-          'insertText': 'toString'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'toString()'
+          }
         },
         {
           'label': 'charAt',
           'kind': 2,
           'detail': 'method',
           'sortText': 'charAt',
-          'insertText': 'charAt'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'charAt()'
+          }
         },
         {
           'label': 'charCodeAt',
           'kind': 2,
           'detail': 'method',
           'sortText': 'charCodeAt',
-          'insertText': 'charCodeAt'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'charCodeAt()'
+          }
         },
         {
           'label': 'concat',
           'kind': 2,
           'detail': 'method',
           'sortText': 'concat',
-          'insertText': 'concat'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'concat()'
+          }
         },
         {
           'label': 'indexOf',
           'kind': 2,
           'detail': 'method',
           'sortText': 'indexOf',
-          'insertText': 'indexOf'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'indexOf()'
+          }
         },
         {
           'label': 'lastIndexOf',
           'kind': 2,
           'detail': 'method',
           'sortText': 'lastIndexOf',
-          'insertText': 'lastIndexOf'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'lastIndexOf()'
+          }
         },
         {
           'label': 'localeCompare',
           'kind': 2,
           'detail': 'method',
           'sortText': 'localeCompare',
-          'insertText': 'localeCompare'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'localeCompare()'
+          }
         },
         {
           'label': 'match',
           'kind': 2,
           'detail': 'method',
           'sortText': 'match',
-          'insertText': 'match'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'match()'
+          }
         },
         {
           'label': 'replace',
           'kind': 2,
           'detail': 'method',
           'sortText': 'replace',
-          'insertText': 'replace'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'replace()'
+          }
         },
         {
           'label': 'search',
           'kind': 2,
           'detail': 'method',
           'sortText': 'search',
-          'insertText': 'search'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'search()'
+          }
         },
         {
           'label': 'slice',
           'kind': 2,
           'detail': 'method',
           'sortText': 'slice',
-          'insertText': 'slice'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'slice()'
+          }
         },
         {
           'label': 'split',
           'kind': 2,
           'detail': 'method',
           'sortText': 'split',
-          'insertText': 'split'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'split()'
+          }
         },
         {
           'label': 'substring',
           'kind': 2,
           'detail': 'method',
           'sortText': 'substring',
-          'insertText': 'substring'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'substring()'
+          }
         },
         {
           'label': 'toLowerCase',
           'kind': 2,
           'detail': 'method',
           'sortText': 'toLowerCase',
-          'insertText': 'toLowerCase'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'toLowerCase()'
+          }
         },
         {
           'label': 'toLocaleLowerCase',
           'kind': 2,
           'detail': 'method',
           'sortText': 'toLocaleLowerCase',
-          'insertText': 'toLocaleLowerCase'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'toLocaleLowerCase()'
+          }
         },
         {
           'label': 'toUpperCase',
           'kind': 2,
           'detail': 'method',
           'sortText': 'toUpperCase',
-          'insertText': 'toUpperCase'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'toUpperCase()'
+          }
         },
         {
           'label': 'toLocaleUpperCase',
           'kind': 2,
           'detail': 'method',
           'sortText': 'toLocaleUpperCase',
-          'insertText': 'toLocaleUpperCase'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'toLocaleUpperCase()'
+          }
         },
         {
           'label': 'trim',
           'kind': 2,
           'detail': 'method',
           'sortText': 'trim',
-          'insertText': 'trim'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'trim()'
+          }
         },
         {
           'label': 'length',
           'kind': 10,
           'detail': 'property',
           'sortText': 'length',
-          'insertText': 'length'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'length'
+          }
         },
         {
           'label': 'substr',
           'kind': 2,
           'detail': 'method',
           'sortText': 'substr',
-          'insertText': 'substr'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'substr()'
+          }
         },
         {
           'label': 'valueOf',
           'kind': 2,
           'detail': 'method',
           'sortText': 'valueOf',
-          'insertText': 'valueOf'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'valueOf()'
+          }
         },
         {
           'label': 'codePointAt',
           'kind': 2,
           'detail': 'method',
           'sortText': 'codePointAt',
-          'insertText': 'codePointAt'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'codePointAt()'
+          }
         },
         {
           'label': 'includes',
           'kind': 2,
           'detail': 'method',
           'sortText': 'includes',
-          'insertText': 'includes'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'includes()'
+          }
         },
         {
           'label': 'endsWith',
           'kind': 2,
           'detail': 'method',
           'sortText': 'endsWith',
-          'insertText': 'endsWith'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'endsWith()'
+          }
         },
         {
           'label': 'normalize',
           'kind': 2,
           'detail': 'method',
           'sortText': 'normalize',
-          'insertText': 'normalize'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'normalize()'
+          }
         },
         {
           'label': 'repeat',
           'kind': 2,
           'detail': 'method',
           'sortText': 'repeat',
-          'insertText': 'repeat'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'repeat()'
+          }
         },
         {
           'label': 'startsWith',
           'kind': 2,
           'detail': 'method',
           'sortText': 'startsWith',
-          'insertText': 'startsWith'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'startsWith()'
+          }
         },
         {
           'label': 'anchor',
           'kind': 2,
           'detail': 'method',
           'sortText': 'anchor',
-          'insertText': 'anchor'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'anchor()'
+          }
         },
         {
           'label': 'big',
           'kind': 2,
           'detail': 'method',
           'sortText': 'big',
-          'insertText': 'big'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'big()'
+          }
         },
         {
           'label': 'blink',
           'kind': 2,
           'detail': 'method',
           'sortText': 'blink',
-          'insertText': 'blink'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'blink()'
+          }
         },
         {
           'label': 'bold',
           'kind': 2,
           'detail': 'method',
           'sortText': 'bold',
-          'insertText': 'bold'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'bold()'
+          }
         },
         {
           'label': 'fixed',
           'kind': 2,
           'detail': 'method',
           'sortText': 'fixed',
-          'insertText': 'fixed'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'fixed()'
+          }
         },
         {
           'label': 'fontcolor',
           'kind': 2,
           'detail': 'method',
           'sortText': 'fontcolor',
-          'insertText': 'fontcolor'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'fontcolor()'
+          }
         },
         {
           'label': 'fontsize',
           'kind': 2,
           'detail': 'method',
           'sortText': 'fontsize',
-          'insertText': 'fontsize'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'fontsize()'
+          }
         },
         {
           'label': 'italics',
           'kind': 2,
           'detail': 'method',
           'sortText': 'italics',
-          'insertText': 'italics'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'italics()'
+          }
         },
         {
           'label': 'link',
           'kind': 2,
           'detail': 'method',
           'sortText': 'link',
-          'insertText': 'link'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'link()'
+          }
         },
         {
           'label': 'small',
           'kind': 2,
           'detail': 'method',
           'sortText': 'small',
-          'insertText': 'small'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'small()'
+          }
         },
         {
           'label': 'strike',
           'kind': 2,
           'detail': 'method',
           'sortText': 'strike',
-          'insertText': 'strike'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'strike()'
+          }
         },
         {
           'label': 'sub',
           'kind': 2,
           'detail': 'method',
           'sortText': 'sub',
-          'insertText': 'sub'
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'sub()'
+          }
         },
         {
           'label': 'sup',
           'kind': 2,
           'detail': 'method',
           'sortText': 'sup',
-          'insertText': 'sup'
-        },
+          'textEdit': {
+            'range': {'start': {'line': 4, 'character': 30}, 'end': {'line': 4, 'character': 30}},
+            'newText': 'sup()'
+          }
+        }
       ]
+    });
+  });
+
+  it('should work with external template', async () => {
+    const r0 = await send({
+      jsonrpc: '2.0',
+      id: 0,
+      method: 'initialize',
+      params: {
+        processId: process.pid,
+        rootUri: `file://${PROJECT_PATH}`,
+        capabilities: {},
+      }
+    });
+    expect(r0).toBeDefined();
+    const n0 = await send({
+      jsonrpc: '2.0',
+      method: 'textDocument/didOpen',
+      params: {
+        textDocument: {
+          uri: `file://${PROJECT_PATH}/app/foo.component.html`,
+          languageId: 'typescript',
+          version: 1,
+        }
+      }
+    });
+    expect(n0).toBe(null);  // no response expected from notification
+    const r1 = await send({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'textDocument/hover',
+      params: {
+        textDocument: {uri: `file://${PROJECT_PATH}/app/foo.component.html`},
+        position: {line: 0, character: 3}
+      }
+    });
+    expect(r1).toEqual({
+      jsonrpc: '2.0',
+      id: 1,
+      result: {
+        contents: [{
+          language: 'typescript',
+          value: '(property) FooComponent.title: string',
+        }],
+        range: {
+          start: {line: 0, character: 2},
+          end: {line: 0, character: 7},
+        }
+      }
     });
   });
 });

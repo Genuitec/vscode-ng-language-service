@@ -1,0 +1,20 @@
+><!-- Interpolation test -->
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^ template.ng
+><div>{{ call(1 + 2 + 3) }}</div>
+#^^^^^ template.ng
+#     ^^ template.ng punctuation.definition.block.ts
+#       ^^^^^^^^^^^^^^^^^ template.ng source.js
+#                        ^^ template.ng punctuation.definition.block.ts
+#                          ^^^^^^^ template.ng
+>
+><!-- Property binding test -->
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ template.ng
+><div [ ngStyle ]="{'max-width.px': i * 2 + 5}"></div>
+#^^^^^ template.ng
+#     ^^^^^^^^^^^ template.ng entity.other.attribute-name.html
+#                ^ template.ng punctuation.separator.key-value.html
+#                 ^ template.ng punctuation.definition.string.begin.html string.quoted.html
+#                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^ template.ng source.js
+#                                             ^ template.ng punctuation.definition.string.end.html string.quoted.html
+#                                              ^^^^^^^^ template.ng
+>

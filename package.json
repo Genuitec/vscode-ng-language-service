@@ -2,7 +2,7 @@
   "name": "ng-template",
   "displayName": "Angular Language Service",
   "description": "Editor services for Angular templates",
-  "version": "0.802.5-fixed",
+  "version": "0.802.2",
   "publisher": "Angular",
   "icon": "angular.png",
   "license": "MIT",
@@ -16,28 +16,111 @@
   "categories": [
     "Programming Languages"
   ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "angular.restartNgServer",
+        "title": "Restart Angular Language server",
+        "category": "Angular"
+      }
+    ],
+    "configuration": {
+      "title": "Angular Language Service",
+      "properties": {
+        "angular.ngdk": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Specifies the folder path to @angular/language-service."
+        },
+        "angular.log": {
+          "type": "string",
+          "enum": [
+            "off",
+            "terse",
+            "normal",
+            "verbose"
+          ],
+          "default": "terse",
+          "description": "Enables logging of the Angular server to a file. This log can be used to diagnose Angular Server issues. The log may contain file paths, source code, and other potentially sensitive information from your project."
+        }
+      }
+    },
+    "grammars": [
+      {
+        "path": "./syntaxes/inline-template.json",
+        "scopeName": "inline-template.ng",
+        "injectTo": [
+          "source.ts"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "source.css": "css",
+          "source.js": "javascript"
+        }
+      },
+      {
+        "path": "./syntaxes/inline-styles.json",
+        "scopeName": "inline-styles.ng",
+        "injectTo": [
+          "source.ts"
+        ],
+        "embeddedLanguages": {
+          "source.css": "css"
+        }
+      },
+      {
+        "path": "./syntaxes/template.json",
+        "scopeName": "template.ng",
+        "injectTo": [
+          "text.html"
+        ],
+        "embeddedLanguages": {
+          "text.html": "html",
+          "source.css": "css",
+          "source.js": "javascript"
+        }
+      }
+    ]
+  },
   "activationEvents": [
     "onLanguage:html",
     "onLanguage:typescript"
   ],
   "main": "./client/out/extension",
   "scripts": {
-    "compile": "tsc -b",
+    "compile": "yarn compile:banner && tsc -b && rollup -c",
+    "compile:banner": "tsc -p server/banner.tsconfig.json && rollup -c banner.rollup.config.js",
+    "compile:test": "tsc -b server/src/tests",
+    "compile:integration": "tsc -b integration",
+    "compile:syntaxes-test": "tsc -b syntaxes/test",
+    "format": "scripts/format.sh",
     "watch": "tsc -b -w",
-    "postinstall": "cd client && yarn && cd ../server && yarn && cd ..",
+    "postinstall": "vscode-install && cd client && yarn && cd ../server && yarn && cd ..",
     "package": "rm -rf dist && node scripts/package.js",
-    "test": "tsc -b server/src/tests && jasmine server/out/tests/*_spec.js",
-    "test:integration": "tsc -b integration && jasmine integration/out/*_spec.js"
+    "test": "yarn compile:test && jasmine server/out/tests/*_spec.js",
+    "test:lsp": "yarn compile:integration && jasmine integration/out/lsp/*_spec.js",
+    "test:e2e": "yarn compile:integration && ./scripts/e2e.sh",
+    "test:syntaxes": "yarn compile:syntaxes-test && jasmine syntaxes/test/driver.js"
   },
   "dependencies": {
-    "typescript": "~3.5.3"
+    "typescript": "~3.6.4"
   },
   "devDependencies": {
-    "@types/jasmine": "^3.4.0",
-    "@types/node": "^10.9.4",
-    "jasmine": "^3.4.0",
-    "vsce": "^1.66.0",
-    "vscode-jsonrpc": "^4.0.0"
+    "@types/jasmine": "3.5.0",
+    "@types/node": "12.12.24",
+    "clang-format": "1.3.0",
+    "jasmine": "3.5.0",
+    "rollup": "1.29.0",
+    "rollup-plugin-commonjs": "10.1.0",
+    "tslint": "5.20.1",
+    "tslint-eslint-rules": "5.4.0",
+    "vsce": "1.71.0",
+    "vscode": "1.1.36",
+    "vscode-jsonrpc": "4.0.0",
+    "vscode-tmgrammar-test": "0.0.8"
   },
   "repository": {
     "type": "git",

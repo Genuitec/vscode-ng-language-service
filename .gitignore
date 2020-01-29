@@ -1,3 +1,5 @@
+.vscode-test
+.DS_Store
 node_modules
 client/node_modules/
 client/out/
@@ -6,5 +8,9 @@ server/out
 integration/out
 dist/
 **/.idea/
-.DS_Store
 **/tsconfig.tsbuildinfo
+.vscode/settings.json
+.vimrc
+.nvimrc
+syntaxes/test/*.js
+syntaxes/test/*.map
