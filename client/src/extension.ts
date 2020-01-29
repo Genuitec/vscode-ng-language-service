@@ -24,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Options to control the language client
   const clientOptions: lsp.LanguageClientOptions = {
+    diagnosticCollectionName: 'ng-language-service',
     // Register the server for Angular templates and TypeScript documents
     documentSelector: [
       // scheme: 'file' means listen to changes to files on disk only

@@ -137,14 +137,22 @@ export class Session {
       if (!project || !project.languageServiceEnabled) {
         continue;
       }
-      const ngLS = project.getLanguageService();
-      const diagnostics = ngLS.getSemanticDiagnostics(fileName);
-      // Need to send diagnostics even if it's empty otherwise editor state will
-      // not be updated.
-      this.connection.sendDiagnostics({
-        uri: filePathToUri(fileName),
-        diagnostics: diagnostics.map(d => tsDiagnosticToLspDiagnostic(d, scriptInfo)),
-      });
+      //#region [viper]
+      try {
+        const ngLS = project.getLanguageService();
+        if (ngLS) {
+          const diagnostics = ngLS.getSemanticDiagnostics(fileName);
+          // Need to send diagnostics even if it's empty otherwise editor state will
+          // not be updated.
+          this.connection.sendDiagnostics({
+            uri: filePathToUri(fileName),
+            diagnostics: diagnostics.map(d => tsDiagnosticToLspDiagnostic(d, scriptInfo)),
+          });
+        }
+      } catch (e) {
+        continue;
+      }
+      //#endregion
     }
   }
 
@@ -185,7 +193,9 @@ export class Session {
         this.connection.console.error(configFileErrors.map(e => e.messageText).join('\n'));
       }
       if (!configFileName) {
-        this.connection.console.error(`No config file for ${filePath}`);
+        //#region [viper]
+        //this.connection.console.error(`No config file for ${filePath}`);
+        //#endregion
         return;
       }
       const project = this.projectService.findProject(configFileName);
